@@ -21,11 +21,15 @@ export default function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchMovies() {
       try {
         setIsLoading(true);
         setError("");
-        const res = await fetch(`${baseUrl}s=${query}`);
+        const res = await fetch(`${baseUrl}s=${query}`, {
+          signal: controller.signal,
+        });
 
         if (!res.ok)
           throw new Error("something went terribly wrong when fetching movies");
@@ -34,10 +38,13 @@ export default function App() {
         if (data.Response === "False") throw new Error("movie not found");
 
         setMovies(data.Search);
+        setError("");
         setIsLoading(false);
       } catch (err) {
-        console.error(err.message);
-        setError(err.message);
+        if (err.name !== "AbortError") {
+          setError(err.message);
+          console.log(err.message);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -49,7 +56,12 @@ export default function App() {
       return;
     }
 
+    handleCloseMovie();
     fetchMovies();
+
+    return function () {
+      controller.abort();
+    };
   }, [query]);
 
   const handleSelectMovie = (id) => {

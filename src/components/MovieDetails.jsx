@@ -43,6 +43,20 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatch }) {
   };
 
   useEffect(() => {
+    function callBack(e) {
+      if (e.code === "Backspace") {
+        onCloseMovie();
+      }
+    }
+
+    document.addEventListener("keydown", callBack);
+
+    return function () {
+      document.removeEventListener("keydown", callBack);
+    };
+  }, [onCloseMovie]);
+
+  useEffect(() => {
     async function getMovieDetails() {
       setIsLoading(true);
       const res = await fetch(`${baseUrl}&i=${selectedId}`);
@@ -58,7 +72,12 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatch }) {
   useEffect(() => {
     if (!title) return;
     document.title = `Movie | ${title}`;
+
+    return function () {
+      document.title = "UsePopcorn";
+    };
   }, [title]);
+
   return (
     <div className="details">
       {isLoading ? (
