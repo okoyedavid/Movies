@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import NavBar from "./components/Navbar";
 import ErrorMessage from "./common/ErrorMessage";
 import Loader from "./common/Loader";
@@ -8,61 +8,17 @@ import Box from "./components/Box";
 import Search from "./components/Search";
 import NumResults from "./common/NumResults";
 import MovieDetails from "./components/MovieDetails";
-import baseUrl from "./api/api";
 import Summary from "./components/Summary";
 import WatchedList from "./components/WatchedList";
+import UseMovies from "./api/UseMovies";
+import useLocalStorage from "./components/useLocalStorage";
 
 export default function App() {
-  const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [error, setError] = useState("");
+  const [watched, setWatched] = useLocalStorage([], "watched");
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
-        setError("");
-        const res = await fetch(`${baseUrl}s=${query}`, {
-          signal: controller.signal,
-        });
-
-        if (!res.ok)
-          throw new Error("something went terribly wrong when fetching movies");
-
-        const data = await res.json();
-        if (data.Response === "False") throw new Error("movie not found");
-
-        setMovies(data.Search);
-        setError("");
-        setIsLoading(false);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError(err.message);
-          console.log(err.message);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (query.length < 3) {
-      setMovies([]);
-      setError("");
-      return;
-    }
-
-    handleCloseMovie();
-    fetchMovies();
-
-    return function () {
-      controller.abort();
-    };
-  }, [query]);
+  const { movies, isLoading, error } = UseMovies(query);
 
   const handleSelectMovie = (id) => {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
